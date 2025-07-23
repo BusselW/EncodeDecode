@@ -6,7 +6,7 @@ function Generate-QRCode {
     Add-Type -AssemblyName System.Web
     
     $encodedData = [System.Web.HttpUtility]::UrlEncode($Data)
-    $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=$encodedData"
+    $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=$encodedData"
     
     try {
         $webClient = New-Object System.Net.WebClient
@@ -16,7 +16,7 @@ function Generate-QRCode {
     } catch {
         Write-Host "Primary QR service failed, trying backup..."
         try {
-            $backupUrl = "https://chart.googleapis.com/chart?chs=400x400&cht=qr&chl=$encodedData"
+            $backupUrl = "https://chart.googleapis.com/chart?chs=800x800&cht=qr&chl=$encodedData"
             $webClient = New-Object System.Net.WebClient
             $webClient.DownloadFile($backupUrl, $OutputPath)
             $webClient.Dispose()
