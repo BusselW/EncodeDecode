@@ -71,9 +71,14 @@ try {
     $decompressed = Decompress-Text $merged
     
     if (-not $OutputFile) {
+        $scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
+        $outputDir = Join-Path $scriptDir "output\text"
+        if (!(Test-Path $outputDir)) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        }
         $firstFile = $chunkFiles[0].Name
         $baseName = $firstFile -replace '\.compressed\.1\.txt$', ''
-        $OutputFile = Join-Path (Split-Path $chunkFiles[0].FullName -Parent) "$baseName.restored.txt"
+        $OutputFile = Join-Path $outputDir "$baseName.restored.txt"
     }
     
     $decompressed | Out-File -FilePath $OutputFile -Encoding UTF8 -NoNewline

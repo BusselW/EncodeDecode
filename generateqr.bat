@@ -17,7 +17,7 @@ powershell -ExecutionPolicy Bypass -File "%~dp0GenerateQR.ps1" -InputPath "%~1"
 if %errorlevel% equ 0 (
     echo.
     echo QR code generation completed successfully!
-    echo Check for .qr.*.png files in the same location
+    echo Check output\QR\ for .qr.*.png files
 ) else (
     echo.
     echo QR code generation failed!

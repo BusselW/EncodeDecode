@@ -45,7 +45,12 @@ $content = Get-Content -Path $InputFile -Raw -Encoding UTF8
 $compressed = Compress-Text $content
 $chunks = Split-ForQR $compressed
 
-$outputDir = Split-Path $InputFile -Parent
+$scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
+$outputDir = Join-Path $scriptDir "output\text"
+if (!(Test-Path $outputDir)) {
+    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+}
+
 $baseName = [System.IO.Path]::GetFileNameWithoutExtension($InputFile)
 
 for ($i = 0; $i -lt $chunks.Count; $i++) {

@@ -17,7 +17,17 @@ powershell -ExecutionPolicy Bypass -File "%~dp0Compress.ps1" -InputFile "%~1"
 if %errorlevel% equ 0 (
     echo.
     echo Compression completed successfully!
-    echo Check the same folder for .compressed.*.txt files
+    echo Generating QR codes...
+    powershell -ExecutionPolicy Bypass -File "%~dp0GenerateQR.ps1" -InputPath "%~dp0output\text"
+    
+    if %errorlevel% equ 0 (
+        echo.
+        echo QR codes generated successfully!
+        echo Check output\text\ for compressed files and output\QR\ for QR codes
+    ) else (
+        echo.
+        echo QR code generation failed!
+    )
 ) else (
     echo.
     echo Compression failed!

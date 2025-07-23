@@ -17,7 +17,7 @@ powershell -ExecutionPolicy Bypass -File "%~dp0Decompress.ps1" -InputPath "%~1"
 if %errorlevel% equ 0 (
     echo.
     echo Decompression completed successfully!
-    echo Check for .restored.txt file in the same location
+    echo Check output\text\ for .restored.txt file
 ) else (
     echo.
     echo Decompression failed!

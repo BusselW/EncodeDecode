@@ -87,7 +87,11 @@ if ($chunkFiles.Count -eq 0) {
     exit 1
 }
 
-$outputDir = Split-Path $chunkFiles[0].FullName -Parent
+$scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
+$outputDir = Join-Path $scriptDir "output\QR"
+if (!(Test-Path $outputDir)) {
+    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+}
 $baseName = $chunkFiles[0].Name -replace '\.compressed\.1\.txt$', ''
 
 foreach ($file in $chunkFiles) {
