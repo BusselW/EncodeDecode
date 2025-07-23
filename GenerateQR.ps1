@@ -3,68 +3,65 @@ param([string]$InputPath)
 function Generate-QRCode {
     param([string]$Data, [string]$OutputPath)
     
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -AssemblyName System.Drawing
-    
-    $qrSize = 300
-    $bitmap = New-Object System.Drawing.Bitmap($qrSize, $qrSize)
-    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    $graphics.Clear([System.Drawing.Color]::White)
-    
-    $moduleSize = [Math]::Floor($qrSize / 25)
-    $qrMatrix = Generate-QRMatrix $Data
-    
-    $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::Black)
-    
-    for ($y = 0; $y -lt $qrMatrix.Length; $y++) {
-        for ($x = 0; $x -lt $qrMatrix[$y].Length; $x++) {
-            if ($qrMatrix[$y][$x] -eq 1) {
-                $graphics.FillRectangle($brush, $x * $moduleSize, $y * $moduleSize, $moduleSize, $moduleSize)
-            }
+    try {
+        $ie = New-Object -ComObject InternetExplorer.Application
+        $ie.Visible = $false
+        $ie.Navigate2("about:blank")
+        
+        while ($ie.Busy -or $ie.ReadyState -ne 4) {
+            Start-Sleep -Milliseconds 100
         }
+        
+        $encodedData = [System.Web.HttpUtility]::UrlEncode($Data)
+        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$encodedData"
+        
+        $doc = $ie.Document
+        $doc.write("<html><body><img id='qrimg' src='$qrUrl' /></body></html>")
+        $doc.close()
+        
+        Start-Sleep -Seconds 2
+        
+        $img = $doc.getElementById('qrimg')
+        if ($img) {
+            $canvas = $doc.createElement('canvas')
+            $canvas.width = 300
+            $canvas.height = 300
+            $ctx = $canvas.getContext('2d')
+            $ctx.drawImage($img, 0, 0)
+            
+            $dataUrl = $canvas.toDataURL('image/png')
+            $base64 = $dataUrl.Split(',')[1]
+            $bytes = [Convert]::FromBase64String($base64)
+            [System.IO.File]::WriteAllBytes($OutputPath, $bytes)
+        }
+        
+        $ie.Quit()
+        [System.Runtime.Interopservices.Marshal]::ReleaseComObject($ie) | Out-Null
+        
+    } catch {
+        Write-Host "Internet Explorer method failed, using fallback..."
+        Generate-QRCodeFallback $Data $OutputPath
     }
-    
-    $graphics.Dispose()
-    $brush.Dispose()
-    
-    $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
-    $bitmap.Dispose()
 }
 
-function Generate-QRMatrix {
-    param([string]$Data)
+function Generate-QRCodeFallback {
+    param([string]$Data, [string]$OutputPath)
     
-    $size = 25
-    $matrix = New-Object 'int[,]' $size,$size
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+    Add-Type -AssemblyName System.Web
     
-    $hash = $Data.GetHashCode()
-    $rnd = New-Object System.Random($hash)
+    $encodedData = [System.Web.HttpUtility]::UrlEncode($Data)
+    $qrUrl = "https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=$encodedData"
     
-    for ($i = 0; $i -lt $size; $i++) {
-        for ($j = 0; $j -lt $size; $j++) {
-            $matrix[$i,$j] = $rnd.Next(0, 2)
-        }
+    try {
+        $webClient = New-Object System.Net.WebClient
+        $webClient.DownloadFile($qrUrl, $OutputPath)
+        $webClient.Dispose()
+    } catch {
+        Write-Host "Online QR generation failed, creating text file instead..."
+        $Data | Out-File -FilePath ($OutputPath -replace '\.png$', '.txt') -Encoding UTF8 -NoNewline
     }
-    
-    for ($i = 0; $i -lt 7; $i++) {
-        for ($j = 0; $j -lt 7; $j++) {
-            $cornerPattern = if (($i -eq 0 -or $i -eq 6 -or $j -eq 0 -or $j -eq 6) -or ($i -ge 2 -and $i -le 4 -and $j -ge 2 -and $j -le 4)) { 1 } else { 0 }
-            $matrix[$i,$j] = $cornerPattern
-            $matrix[$i,($size-1-$j)] = $cornerPattern
-            $matrix[($size-1-$i),$j] = $cornerPattern
-        }
-    }
-    
-    $result = @()
-    for ($i = 0; $i -lt $size; $i++) {
-        $row = @()
-        for ($j = 0; $j -lt $size; $j++) {
-            $row += $matrix[$i,$j]
-        }
-        $result += ,$row
-    }
-    
-    return $result
 }
 
 if (-not $InputPath) {
