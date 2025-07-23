@@ -48,9 +48,10 @@ function Generate-QRMatrix {
     
     for ($i = 0; $i -lt 7; $i++) {
         for ($j = 0; $j -lt 7; $j++) {
-            $matrix[$i,$j] = if (($i -eq 0 -or $i -eq 6 -or $j -eq 0 -or $j -eq 6) -or ($i -ge 2 -and $i -le 4 -and $j -ge 2 -and $j -le 4)) { 1 } else { 0 }
-            $matrix[$i,$size-1-$j] = if (($i -eq 0 -or $i -eq 6 -or $j -eq 0 -or $j -eq 6) -or ($i -ge 2 -and $i -le 4 -and $j -ge 2 -and $j -le 4)) { 1 } else { 0 }
-            $matrix[$size-1-$i,$j] = if (($i -eq 0 -or $i -eq 6 -or $j -eq 0 -or $j -eq 6) -or ($i -ge 2 -and $i -le 4 -and $j -ge 2 -and $j -le 4)) { 1 } else { 0 }
+            $cornerPattern = if (($i -eq 0 -or $i -eq 6 -or $j -eq 0 -or $j -eq 6) -or ($i -ge 2 -and $i -le 4 -and $j -ge 2 -and $j -le 4)) { 1 } else { 0 }
+            $matrix[$i,$j] = $cornerPattern
+            $matrix[$i,($size-1-$j)] = $cornerPattern
+            $matrix[($size-1-$i),$j] = $cornerPattern
         }
     }
     
